@@ -42,10 +42,16 @@ impl Rule for VagueSubject {
     fn check(&self, commit: &Commit) -> Option<Finding> {
         const VAGUE: [&str; 6] = ["fix", "wip", "update", "stuff", "changes", "test"];
         let subject = commit.subject.trim().to_lowercase();
-        if VAGUE.iter().any(|v| subject == *v || subject.starts_with(&format!("{v} "))) {
+        if VAGUE
+            .iter()
+            .any(|v| subject == *v || subject.starts_with(&format!("{v} ")))
+        {
             return Some(Finding {
                 rule_name: self.name(),
-                message: format!("subject \"{}\" is too vague to be useful later", commit.subject),
+                message: format!(
+                    "subject \"{}\" is too vague to be useful later",
+                    commit.subject
+                ),
                 example: None,
             });
         }

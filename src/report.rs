@@ -17,7 +17,12 @@ fn short_hash(commit: &Commit) -> &str {
 
 fn render_page(r: &CommitReport) -> String {
     let mut out = String::new();
-    let _ = writeln!(out, "{} {}", short_hash(r.commit).yellow().bold(), r.commit.subject);
+    let _ = writeln!(
+        out,
+        "{} {}",
+        short_hash(r.commit).yellow().bold(),
+        r.commit.subject
+    );
     for finding in &r.findings {
         let _ = writeln!(
             out,
