@@ -1,0 +1,20 @@
+[package]
+name = "gitgroom"
+version = "0.1.0"
+edition = "2021"
+description = "A CLI tool that checks and grooms your git commit messages before they become permanent regrets."
+license = "MIT"
+repository = "https://github.com/mirko/gitgroom"
+readme = "README.md"
+keywords = ["git", "cli", "commit", "linter"]
+categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "gitgroom"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "3", features = ["derive"] }
+owo-colors = "3"
+anyhow = "1"
+regex = "1"
