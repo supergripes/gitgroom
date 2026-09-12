@@ -1,5 +1,7 @@
 # gitgroom
 
+![CI](https://github.com/supergripes/gitgroom/actions/workflows/ci.yml/badge.svg)
+
 A CLI tool that checks your git commit messages and shows you what a better
 one would look like — before they become permanent regrets.
 
