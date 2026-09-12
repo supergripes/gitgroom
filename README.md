@@ -64,6 +64,43 @@ cargo build --release
 ./target/release/gitgroom check
 ```
 
+This produces a native binary at `target/release/gitgroom` — no crates.io
+publish or package manager needed to try it.
+
+## Trying it on another repo locally
+
+`gitgroom` isn't published anywhere yet, but you don't need it to be to test
+it against a real repository:
+
+**Option 1 — run the compiled binary directly.** From inside the repo you
+want to check:
+
+```
+cd /path/to/some/other/repo
+/path/to/gitgroom/target/release/gitgroom check
+```
+
+`gitgroom` shells out to `git` in the current working directory, so you need
+to `cd` into the target repo first — it doesn't take a `--repo-path`-style
+flag.
+
+**Option 2 — install it on your `PATH`.** From inside this repo:
+
+```
+cargo install --path .
+```
+
+This builds in release mode and copies the binary to `~/.cargo/bin/gitgroom`
+(already on `PATH` if you installed Rust via rustup). From then on, just:
+
+```
+cd /path/to/some/other/repo
+gitgroom check --limit 30
+```
+
+After changing the code, re-run `cargo install --path . --force` to update
+the installed binary.
+
 ## License
 
 MIT
