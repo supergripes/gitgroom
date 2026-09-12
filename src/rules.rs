@@ -230,3 +230,153 @@ pub fn all_rules() -> Vec<Box<dyn Rule>> {
         Box::new(OversizedCommit),
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn commit(subject: &str, body: &str, files_changed: usize) -> Commit {
+        Commit {
+            hash: "abc1234def5678".to_string(),
+            subject: subject.to_string(),
+            body: body.to_string(),
+            files_changed,
+        }
+    }
+
+    #[test]
+    fn vague_subject_flags_known_vague_words() {
+        assert!(VagueSubject.check(&commit("fix", "", 1)).is_some());
+        assert!(VagueSubject.check(&commit("wip", "", 1)).is_some());
+        assert!(VagueSubject
+            .check(&commit("update login page", "", 1))
+            .is_some());
+    }
+
+    #[test]
+    fn vague_subject_allows_descriptive_messages() {
+        assert!(VagueSubject
+            .check(&commit("feat: reject expired refresh tokens", "", 1))
+            .is_none());
+    }
+
+    #[test]
+    fn subject_too_long_flags_over_72_chars() {
+        let long_subject = "a".repeat(73);
+        assert!(SubjectTooLong
+            .check(&commit(&long_subject, "", 1))
+            .is_some());
+    }
+
+    #[test]
+    fn subject_too_long_allows_exactly_72_chars() {
+        let subject = "a".repeat(72);
+        assert!(SubjectTooLong.check(&commit(&subject, "", 1)).is_none());
+    }
+
+    #[test]
+    fn missing_body_flags_big_change_without_body() {
+        assert!(MissingBodyOnBigChange
+            .check(&commit("feat: big change", "", 5))
+            .is_some());
+    }
+
+    #[test]
+    fn missing_body_allows_big_change_with_body() {
+        assert!(MissingBodyOnBigChange
+            .check(&commit("feat: big change", "explains why", 5))
+            .is_none());
+    }
+
+    #[test]
+    fn missing_body_allows_small_change_without_body() {
+        assert!(MissingBodyOnBigChange
+            .check(&commit("feat: small change", "", 4))
+            .is_none());
+    }
+
+    #[test]
+    fn oversized_commit_flags_15_or_more_files() {
+        assert!(OversizedCommit
+            .check(&commit("feat: sprawling change", "", 15))
+            .is_some());
+    }
+
+    #[test]
+    fn oversized_commit_allows_under_15_files() {
+        assert!(OversizedCommit
+            .check(&commit("feat: normal change", "", 14))
+            .is_none());
+    }
+
+    #[test]
+    fn conventional_commit_format_accepts_valid_shapes() {
+        let rule = ConventionalCommitFormat::new();
+        assert!(rule
+            .check(&commit("feat: add token refresh support", "", 1))
+            .is_none());
+        assert!(rule
+            .check(&commit("fix(auth): handle expired sessions", "", 1))
+            .is_none());
+        assert!(rule
+            .check(&commit("feat!: breaking change to config format", "", 1))
+            .is_none());
+    }
+
+    #[test]
+    fn conventional_commit_format_rejects_invalid_shapes() {
+        let rule = ConventionalCommitFormat::new();
+        assert!(rule.check(&commit("random subject line", "", 1)).is_some());
+        assert!(rule
+            .check(&commit("Feat: wrong case for type", "", 1))
+            .is_some());
+    }
+
+    #[test]
+    fn subject_full_stop_flags_trailing_period() {
+        assert!(SubjectFullStop
+            .check(&commit("fix(auth): resolve token bug.", "", 1))
+            .is_some());
+    }
+
+    #[test]
+    fn subject_full_stop_allows_no_trailing_period() {
+        assert!(SubjectFullStop
+            .check(&commit("fix(auth): resolve token bug", "", 1))
+            .is_none());
+    }
+
+    #[test]
+    fn subject_full_stop_example_strips_the_period() {
+        let example = SubjectFullStop
+            .example(&commit("fix(auth): resolve token bug.", "", 1))
+            .unwrap();
+        assert_eq!(example, "fix(auth): resolve token bug");
+    }
+
+    #[test]
+    fn imperative_mood_flags_past_tense_and_gerund() {
+        assert!(ImperativeMood
+            .check(&commit("feat: added token refresh", "", 1))
+            .is_some());
+        assert!(ImperativeMood
+            .check(&commit("fixing the auth bug", "", 1))
+            .is_some());
+    }
+
+    #[test]
+    fn imperative_mood_allows_imperative_verbs() {
+        assert!(ImperativeMood
+            .check(&commit("feat: add token refresh support", "", 1))
+            .is_none());
+    }
+
+    #[test]
+    fn description_part_strips_conventional_commit_prefix() {
+        assert_eq!(
+            description_part("feat(auth): add token refresh"),
+            "add token refresh"
+        );
+        assert_eq!(description_part("no prefix here"), "no prefix here");
+    }
+}
